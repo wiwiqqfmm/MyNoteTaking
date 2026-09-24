@@ -476,10 +476,20 @@
                 });
             }
 
+            updateEditorActions() {
+                const deleteBtn = document.getElementById('deleteBtn');
+                if (this.currentNote && this.currentNote.id) {
+                    deleteBtn.style.display = 'inline-block';
+                } else {
+                    deleteBtn.style.display = 'none';
+                }
+            }
+
             showEditor() {
                 document.getElementById('emptyState').style.display = 'none';
                 document.getElementById('editorForm').style.display = 'block';
                 document.getElementById('editorActions').style.display = 'flex';
+                this.updateEditorActions();
             }
 
             hideEditor() {
@@ -530,6 +540,7 @@
 
                     const savedNote = await response.json();
                     this.currentNote = savedNote;
+                    this.updateEditorActions();
                     
                     // Update notes list
                     const existingIndex = this.notes.findIndex(n => n.id === savedNote.id);
