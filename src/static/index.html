@@ -344,6 +344,12 @@
                 <div class="editor-header">
                     <h2 class="editor-title" id="editorTitle">Select a note to edit</h2>
                     <div class="editor-actions" id="editorActions" style="display: none;">
+                        <select id="targetLanguage" class="form-input" style="max-width: 160px; padding: 8px 12px; font-size: 14px;">
+                            <option value="Chinese">Chinese</option>
+                            <option value="English">English</option>
+                            <option value="Japanese">Japanese</option>
+                        </select>
+                        <button class="btn btn-save" id="translateBtn" type="button">🌐 Translate</button>
                         <button class="btn btn-save" id="saveBtn">💾 Save</button>
                         <button class="btn btn-delete" id="deleteBtn">🗑️ Delete</button>
                     </div>
@@ -388,6 +394,7 @@
             bindEvents() {
                 document.getElementById('newNoteBtn').addEventListener('click', () => this.createNewNote());
                 document.getElementById('saveBtn').addEventListener('click', () => this.saveNote());
+                document.getElementById('translateBtn').addEventListener('click', () => this.translateCurrentNote());
                 document.getElementById('deleteBtn').addEventListener('click', () => this.deleteNote());
                 document.getElementById('searchBox').addEventListener('input', (e) => this.searchNotes(e.target.value));
                 
@@ -558,6 +565,52 @@
                     }
                 } catch (error) {
                     this.showMessage(`Error saving note: ${error.message}`, 'error');
+                }
+            }
+
+            async translateCurrentNote() {
+                const title = document.getElementById('noteTitle').value.trim();
+                const content = document.getElementById('noteContent').value.trim();
+                const targetLanguage = document.getElementById('targetLanguage').value;
+
+                if (!title && !content) {
+                    alert('Please enter some text to translate first.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: title,
+                            content: content,
+                            target_language: targetLanguage
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Translation failed');
+                    }
+
+                    if (data.title !== undefined) {
+                        document.getElementById('noteTitle').value = data.title;
+                    }
+                    if (data.content !== undefined) {
+                        document.getElementById('noteContent').value = data.content;
+                    }
+
+                    if (this.currentNote && this.currentNote.id) {
+                        this.currentNote.title = data.title || this.currentNote.title;
+                        this.currentNote.content = data.content || this.currentNote.content;
+                    }
+
+                    document.getElementById('editorTitle').textContent = data.title || 'Untitled Note';
+                    this.showMessage('Translation completed successfully!', 'success');
+                } catch (error) {
+                    alert(`Translation error: ${error.message}`);
+                    this.showMessage(`Translation error: ${error.message}`, 'error');
                 }
             }
 
