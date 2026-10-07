@@ -3,15 +3,20 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# 1. 加载 .env 文件中的环境变量
+# Load environment variables from .env in local development.
 load_dotenv()
 
-# 2. 从环境变量中读取配置
 API_KEY = os.getenv("OPENROUTER_API_KEY")
-BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://genai.comp.polyu.edu.hk/api/v1")
-MODEL_NAME = os.getenv("OPENROUTER_MODEL", "DeepSeek-V4-Flash")
+BASE_URL = os.getenv("OPENROUTER_BASE_URL")
+MODEL_NAME = os.getenv("OPENROUTER_MODEL")
 
-# 3. 创建 OpenAI Client
+if not API_KEY:
+    raise RuntimeError("Missing required environment variable: OPENROUTER_API_KEY")
+if not BASE_URL:
+    raise RuntimeError("Missing required environment variable: OPENROUTER_BASE_URL")
+if not MODEL_NAME:
+    raise RuntimeError("Missing required environment variable: OPENROUTER_MODEL")
+
 client = OpenAI(
     base_url=BASE_URL,
     api_key=API_KEY

@@ -47,10 +47,29 @@ with app.app_context():
     db.create_all()
 
 try:
-    from translator import client, MODEL_NAME
-except Exception:  # pragma: no cover - import is optional for preview builds
+    from translator import client
+except Exception as exc:  # pragma: no cover - import is optional for preview builds
     client = None
-    MODEL_NAME = os.getenv('OPENROUTER_MODEL', 'DeepSeek-V4-Flash')
+    _translator_import_error = exc
+else:
+    _translator_import_error = None
+
+MODEL_NAME = os.getenv('OPENROUTER_MODEL')
+if not MODEL_NAME:
+    raise RuntimeError(
+        'Missing required environment variable: OPENROUTER_MODEL. ' \
+        'Set it in your local .env or Vercel project settings.'
+    )
+if not os.getenv('OPENROUTER_API_KEY'):
+    raise RuntimeError(
+        'Missing required environment variable: OPENROUTER_API_KEY. ' \
+        'Set it in your local .env or Vercel project settings.'
+    )
+if not os.getenv('OPENROUTER_BASE_URL'):
+    raise RuntimeError(
+        'Missing required environment variable: OPENROUTER_BASE_URL. ' \
+        'Set it in your local .env or Vercel project settings.'
+    )
 
 
 def load_translation_prompt(target_language):
@@ -85,7 +104,10 @@ def parse_translation_response(content):
 
 def translate_note_text(title, content, target_language):
     if client is None:
-        raise RuntimeError('OPENROUTER_API_KEY is not configured. Set it in the Vercel environment variables.')
+        raise RuntimeError(
+            'Unable to initialize OpenRouter client. ' \
+            f'Original import error: {_translator_import_error}'
+        )
 
     user_payload = {
         'title': title,
